@@ -54,8 +54,24 @@ builder.Services.ConfigureApplicationCookie(o =>
     };
 });
 
-builder.Services.AddAuthorization();
+builder.Services.AddCors(o =>
+{
+    o.AddPolicy("frontend", p => p
+      .WithOrigins("http://localhost:5173")
+      .AllowAnyHeader()
+      .AllowAnyMethod()
+      .AllowCredentials());
+});
 
+
+builder.Services.ConfigureApplicationCookie(o =>
+{
+    o.Cookie.SecurePolicy = CookieSecurePolicy.None; // http’te cookie yazılabilsin
+    o.Cookie.SameSite = SameSiteMode.Lax;
+    o.Cookie.HttpOnly = true;
+});
+
+builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -69,7 +85,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
+
+app.UseRouting();
+
+app.UseCors("frontend");
 
 app.UseAuthentication();
 app.UseAuthorization();
