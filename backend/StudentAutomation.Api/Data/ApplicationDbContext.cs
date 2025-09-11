@@ -28,11 +28,12 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser, IdentityRole
         {
             e.HasKey(x => x.UserId);
             e.HasIndex(x => x.Number).IsUnique();
-            
+
             e.HasOne(x => x.User)
                 .WithMany()
                 .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+            
         });
 
         //Teacher
@@ -49,8 +50,9 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser, IdentityRole
         //Course
         builder.Entity<Course>(e =>
         {
-            e.HasKey(x => x.Id);
+            e.HasKey(x => x.CourseId);
             e.HasIndex(x => x.Code).IsUnique();
+
             e.HasOne(x => x.Teacher)
                 .WithMany(t => t.Courses)
                 .HasForeignKey(x => x.TeacherId)
@@ -61,7 +63,11 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser, IdentityRole
         //Enrollment
         builder.Entity<Enrollment>(e =>
         {
-            e.HasKey(x => x.EnrollmentId); //composite key
+            e.HasKey(x => x.EnrollmentId); 
+
+            e.Property(x => x.CourseId).IsRequired();
+            e.Property(x => x.StudentId).IsRequired();
+
             e.HasOne(x => x.Student)
                 .WithMany()
                 .HasForeignKey(x => x.StudentId)
@@ -97,9 +103,12 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser, IdentityRole
         //CourseComment
         builder.Entity<CourseComment>(e =>
         {
+            e.Property(x => x.CourseId).IsRequired();
+
             e.HasOne(x => x.Course)
                 .WithMany(c => c.Comments)
                 .HasForeignKey(x => x.CourseId)
+                .HasPrincipalKey(c => c.CourseId) 
                 .OnDelete(DeleteBehavior.Cascade);
 
             e.HasOne(x => x.Teacher)

@@ -8,7 +8,7 @@ public class Enrollment
     public string StudentId { get; set; } = default!;
     public Student Student { get; set; } = default!;
 
-    public Guid CourseId { get; set; }
+    public string CourseId { get; set; }
     public Course Course { get; set; } = default!;
 
     public ICollection<Grade> Grades { get; set; } = new List<Grade>();

@@ -1,0 +1,126 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using StudentAutomation.Api.Data;
+using StudentAutomation.Api.Domain;
+
+[ApiController]
+[Route("api/[controller]")]
+public class CoursesController : ControllerBase
+{
+    private readonly ApplicationDbContext _db;
+    public CoursesController(ApplicationDbContext db) { _db = db; }
+
+    public record CreateCourseDto(string Code, string Name, string TeacherId);
+    public record UpdateStatusDto(CourseStatus Status); // enum kullan
+
+    // Admin ders oluşturur
+    [Authorize(Roles = "Admin")]
+    [HttpPost]
+    public async Task<IActionResult> Create(CreateCourseDto dto)
+    {
+        // CourseId string olduğundan, EF otomatik üretmiyorsa bir GUID verelim
+        var c = new Course
+        {
+            CourseId = Guid.NewGuid().ToString("N"),
+            Code = dto.Code,
+            Name = dto.Name,
+            TeacherId = dto.TeacherId
+        };
+
+        _db.Courses.Add(c);
+        await _db.SaveChangesAsync();
+        return Ok(c);
+    }
+
+    // Liste (herkes)
+    [HttpGet]
+    public async Task<IActionResult> GetAll() =>
+        Ok(await _db.Courses.AsNoTracking().ToListAsync());
+
+    // Teacher kendi dersleri
+    [Authorize(Roles = "Teacher")]
+    [HttpGet("mine")]
+    public async Task<IActionResult> MyCourses()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var list = await _db.Courses.AsNoTracking()
+                         .Where(c => c.TeacherId == userId)
+                         .ToListAsync();
+        return Ok(list);
+    }
+
+    // Teacher status günceller (kendi dersinde)
+    [Authorize(Roles = "Teacher")]
+    [HttpPut("{courseId}/status")]
+    public async Task<IActionResult> UpdateStatus(string courseId, UpdateStatusDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var c = await _db.Courses.FindAsync(courseId);
+        if (c is null || c.TeacherId != userId) return Forbid();
+
+        c.Status = dto.Status; // enum
+        await _db.SaveChangesAsync();
+        return Ok(c);
+    }
+
+    // Enroll işlemleri
+    public record EnrollDto(string StudentId);
+
+    [Authorize(Roles = "Teacher")]
+    [HttpPost("{courseId}/enroll")]
+    public async Task<IActionResult> Enroll(string courseId, EnrollDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var c = await _db.Courses.FindAsync(courseId);
+        if (c is null || c.TeacherId != userId) return Forbid();
+
+        var exists = await _db.Enrollments
+            .AnyAsync(e => e.CourseId == courseId && e.StudentId == dto.StudentId);
+        if (exists) return BadRequest("Already enrolled.");
+
+        _db.Enrollments.Add(new Enrollment { CourseId = courseId, StudentId = dto.StudentId });
+        await _db.SaveChangesAsync();
+        return Ok(new { message = "Enrolled" });
+    }
+
+    [Authorize(Roles = "Teacher")]
+    [HttpDelete("{courseId}/enroll/{studentId}")]
+    public async Task<IActionResult> Unenroll(string courseId, string studentId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var c = await _db.Courses.FindAsync(courseId);
+        if (c is null || c.TeacherId != userId) return Forbid();
+
+        var enr = await _db.Enrollments
+            .FirstOrDefaultAsync(e => e.CourseId == courseId && e.StudentId == studentId);
+        if (enr is null) return NotFound();
+
+        _db.Enrollments.Remove(enr);
+        await _db.SaveChangesAsync();
+        return Ok(new { message = "Unenrolled" });
+    }
+
+    // Yorum (Teacher → own course)
+    public record CommentDto(string StudentId, string Comment);
+
+    [Authorize(Roles = "Teacher")]
+    [HttpPost("{courseId}/comments")]
+    public async Task<IActionResult> Comment(string courseId, CommentDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var c = await _db.Courses.FindAsync(courseId);
+        if (c is null || c.TeacherId != userId) return Forbid();
+
+        _db.CourseComments.Add(new CourseComment
+        {
+            CourseId = courseId,
+            TeacherId = userId,
+            StudentId = dto.StudentId,
+            Comment = dto.Comment
+        });
+        await _db.SaveChangesAsync();
+        return Ok(new { message = "Comment added" });
+    }
+}

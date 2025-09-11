@@ -1,25 +1,65 @@
+using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using StudentAutomation.Api.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var conn = builder.Configuration.GetConnectionString("DefaultConnection");
-
 //dbcontext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(conn));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services
+    .AddIdentityCore<IdentityUser>(options =>{options.Password.RequiredLength = 6;})
+    .AddRoles<IdentityRole>() 
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddSignInManager();
 
 // Identity
-builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+builder.Services.AddIdentityCore<IdentityUser>(options=>{options.Password.RequiredLength = 6;})
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
+    .AddSignInManager();
 
+// Authentication (cookie)
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme       = IdentityConstants.ApplicationScheme;
+    options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+})
+.AddIdentityCookies();
+
+// --- Cookie ayarları (API için redirect yerine 401/403 dönsün) ---
+builder.Services.ConfigureApplicationCookie(o =>
+{
+    o.Events.OnRedirectToLogin = ctx =>
+    {
+        if (ctx.Request.Path.StartsWithSegments("/api"))
+        {
+            ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        }
+        ctx.Response.Redirect(ctx.RedirectUri);
+        return Task.CompletedTask;
+    };
+    o.Events.OnRedirectToAccessDenied = ctx =>
+    {
+        if (ctx.Request.Path.StartsWithSegments("/api"))
+        {
+            ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        }
+        ctx.Response.Redirect(ctx.RedirectUri);
+        return Task.CompletedTask;
+    };
+});
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
 
 var app = builder.Build();
 
@@ -29,12 +69,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-
 app.UseHttpsRedirection();
 
-app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
 

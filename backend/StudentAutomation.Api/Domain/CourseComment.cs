@@ -4,7 +4,7 @@ namespace StudentAutomation.Api.Domain;
 public class CourseComment
 {
     public int CourseCommentId { get; set; }
-    public Guid CourseId { get; set; }
+    public string CourseId { get; set; }
     public Course Course { get; set; } = default!;
 
     public string TeacherId { get; set; } = default!;

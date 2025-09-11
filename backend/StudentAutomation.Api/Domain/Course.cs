@@ -3,7 +3,7 @@ public enum CourseStatus { Planned = 0, Started = 1, Completed = 2 }
 
 public class Course
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public string CourseId { get; set; } = default!; // Primary Key
     public string Code { get; set; } = default!;
     public string Name { get; set; } = default!;
     public CourseStatus Status { get; set; } = CourseStatus.Planned;
