@@ -10,16 +10,17 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services
-    .AddIdentityCore<IdentityUser>(options =>{options.Password.RequiredLength = 6;})
-    .AddRoles<IdentityRole>() 
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddSignInManager();
-
-// Identity
-builder.Services.AddIdentityCore<IdentityUser>(options=>{options.Password.RequiredLength = 6;})
+    .AddIdentityCore<IdentityUser>(o =>
+    {
+        o.Password.RequiredLength = 6;
+        o.Password.RequireDigit = false;
+        o.Password.RequireUppercase = false;
+        o.Password.RequireNonAlphanumeric = false;
+    })
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddSignInManager();
+    .AddSignInManager()
+    .AddDefaultTokenProviders();
 
 // Authentication (cookie)
 builder.Services.AddAuthentication(options =>
@@ -52,6 +53,10 @@ builder.Services.ConfigureApplicationCookie(o =>
         ctx.Response.Redirect(ctx.RedirectUri);
         return Task.CompletedTask;
     };
+    // local http dev için
+    o.Cookie.SecurePolicy = CookieSecurePolicy.None;
+    o.Cookie.SameSite = SameSiteMode.Lax;
+    o.Cookie.HttpOnly = true;
 });
 
 builder.Services.AddCors(o =>
@@ -63,13 +68,6 @@ builder.Services.AddCors(o =>
       .AllowCredentials());
 });
 
-
-builder.Services.ConfigureApplicationCookie(o =>
-{
-    o.Cookie.SecurePolicy = CookieSecurePolicy.None; // http’te cookie yazılabilsin
-    o.Cookie.SameSite = SameSiteMode.Lax;
-    o.Cookie.HttpOnly = true;
-});
 
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();

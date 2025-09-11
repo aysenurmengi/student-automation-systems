@@ -4,7 +4,7 @@ namespace StudentAutomation.Api.Domain;
 public class Student
 {
     public string UserId { get; set; } = default!;
-    public string Number { get; set; }
+    public string Number { get; set; } = default!;
     public string FirstName { get; set; } = default!;
     public string LastName { get; set; } = default!;
 
