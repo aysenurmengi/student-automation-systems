@@ -10,8 +10,8 @@ import AppLayout from "./components/AppLayout";
 function App() {
 
   return (
-    <AuthContext>
-      <BrowserRouter>
+    <BrowserRouter>
+      <AuthContext>
         <Routes>
           <Route path="/login" element={<Login/>} />
           <Route
@@ -24,8 +24,8 @@ function App() {
           />
           <Route path="*" element={<Navigate to="/login" replace/>} />
         </Routes>
-      </BrowserRouter>
-    </AuthContext>
+      </AuthContext>
+    </BrowserRouter>
   );
 }
 

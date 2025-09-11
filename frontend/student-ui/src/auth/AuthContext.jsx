@@ -1,40 +1,54 @@
-import { createContext,useContext, useEffect, useState } from "react";
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useEffect, useState } from "react";
 import { AuthApi } from "../api/auth";
 
-const Ctx = createContext();
+const Ctx = createContext({
+  me: null,
+  loading: true,
+  refresh: async () => false,
+  logout: async () => {},
+});
 
-export const AuthContext = ({ children }) =>
-{
-    const [me, setMe] = useState(null);
-    const [loading, setLoading] = useState(true);
+export const AuthContext = ({ children }) => {
+  const [me, setMe] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-    const refresh = async () =>
-    {
-        try
-        {
-            const { data } = await AuthApi.me();
-            setMe(data);
-        } catch {
-            setMe(null);
-        } finally {
-            setLoading(false);
-        }
-    };
+  // Uygulama açılışında oturumu getir
+  useEffect(() => {
+    (async () => {
+      await refresh();
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    const logout = async () => {
-        await AuthApi.logout();
-        setMe(null);
-    };
+  // Oturum bilgisini sunucudan yenile
+  const refresh = async () => {
+    try {
+      const { data } = await AuthApi.me(); // 200 ise cookie var
+      setMe(data);
+      setLoading(false);
+      return true; // ✅ başarılı
+    } catch {
+      setMe(null);
+      setLoading(false);
+      return false; // ❌ yetkisiz / hata
+    }
+  };
 
-    useEffect(() => { refresh(); }, []);
+  const logout = async () => {
+    try {
+      await AuthApi.logout();
+    } finally {
+      setMe(null);
+    }
+  };
 
-    return (
-        <Ctx.Provider value={{ me, loading, refresh, logout }}>
-            {children}
-        </Ctx.Provider>
-    );
+  return (
+    <Ctx.Provider value={{ me, loading, refresh, logout }}>
+      {children}
+    </Ctx.Provider>
+  );
 };
 
-// 🔑 useAuth burada
-// eslint-disable-next-line react-refresh/only-export-components, no-undef
+// Hook
 export const useAuth = () => useContext(Ctx);

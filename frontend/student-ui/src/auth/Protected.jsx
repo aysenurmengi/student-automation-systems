@@ -3,8 +3,19 @@ import { useAuth } from "./AuthContext";
 
 export const Protected = ({ roles, children }) => {
   const { me, loading } = useAuth();
-  if (loading) return <div>Loading...</div>;
+
+  // Yüklenirken hiçbir yere yönlendirme
+  if (loading) return null; // istersen burada spinner döndürebilirsin
+
+  // Oturum yoksa login'e
   if (!me) return <Navigate to="/login" replace />;
-  if (roles && !roles.some(r => me.roles.includes(r))) return <div>403 Forbidden</div>;
+
+  // Rol kısıtı varsa kontrol et
+  if (roles && roles.length > 0) {
+    const userRoles = me.roles || [];
+    const allowed = roles.some((r) => userRoles.includes(r));
+    if (!allowed) return <Navigate to="/login" replace />;
+  }
+
   return children;
 };
