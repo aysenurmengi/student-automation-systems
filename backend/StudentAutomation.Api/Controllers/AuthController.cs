@@ -24,6 +24,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register/student")]
+    [AllowAnonymous]
     public async Task<IActionResult> RegisterStudent(RegisterStudentDto dto)
     {
         await EnsureRole("Student");
@@ -48,6 +49,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register/teacher")]
+    [AllowAnonymous]
     public async Task<IActionResult> RegisterTeacher(RegisterTeacherDto dto)
     {
         await EnsureRole("Teacher");
@@ -62,6 +64,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register/admin")]
+    [AllowAnonymous]
     public async Task<IActionResult> RegisterAdmin(RegisterAdminDto dto)
     {
         await EnsureRole("Admin");
@@ -75,6 +78,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login/student")]
+    [AllowAnonymous]
     public async Task<IActionResult> LoginStudent(LoginStudentDto dto)
     {
         var st = await _db.Students.AsNoTracking().FirstOrDefaultAsync(s => s.Number == dto.Number);
@@ -88,6 +92,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login/teacher")]
+    [AllowAnonymous]
     public async Task<IActionResult> LoginTeacher(LoginTeacherDto dto)
     {
         var tc = await _db.Teachers.AsNoTracking().FirstOrDefaultAsync(t => t.FirstName == dto.FirstName && t.LastName == dto.LastName);
@@ -101,6 +106,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [AllowAnonymous]
     public async Task<IActionResult> Login(LoginDto dto)
     {
         var result = await _signIn.PasswordSignInAsync(dto.UserName, dto.Password, false, false);

@@ -30,34 +30,23 @@ builder.Services.AddAuthentication(options =>
 })
 .AddIdentityCookies();
 
-// --- Cookie ayarları (API için redirect yerine 401/403 dönsün) ---
 builder.Services.ConfigureApplicationCookie(o =>
 {
-    o.Events.OnRedirectToLogin = ctx =>
-    {
-        if (ctx.Request.Path.StartsWithSegments("/api"))
-        {
-            ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            return Task.CompletedTask;
-        }
-        ctx.Response.Redirect(ctx.RedirectUri);
-        return Task.CompletedTask;
+    // API'de redirect yerine 401/403
+    o.Events.OnRedirectToLogin = ctx => {
+        if (ctx.Request.Path.StartsWithSegments("/api")) { ctx.Response.StatusCode = 401; return Task.CompletedTask; }
+        ctx.Response.Redirect(ctx.RedirectUri); return Task.CompletedTask;
     };
-    o.Events.OnRedirectToAccessDenied = ctx =>
-    {
-        if (ctx.Request.Path.StartsWithSegments("/api"))
-        {
-            ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
-            return Task.CompletedTask;
-        }
-        ctx.Response.Redirect(ctx.RedirectUri);
-        return Task.CompletedTask;
+    o.Events.OnRedirectToAccessDenied = ctx => {
+        if (ctx.Request.Path.StartsWithSegments("/api")) { ctx.Response.StatusCode = 403; return Task.CompletedTask; }
+        ctx.Response.Redirect(ctx.RedirectUri); return Task.CompletedTask;
     };
-    // local http dev için
-    o.Cookie.SecurePolicy = CookieSecurePolicy.None;
-    o.Cookie.SameSite = SameSiteMode.Lax;
+
     o.Cookie.HttpOnly = true;
+    o.Cookie.SameSite = SameSiteMode.Lax;
+    o.Cookie.SecurePolicy = CookieSecurePolicy.None;
 });
+
 
 builder.Services.AddCors(o =>
 {
