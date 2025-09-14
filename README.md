@@ -43,7 +43,7 @@ cd backend/StudentAutomation.Api
 
 dotnet run
 
-Swagger: https://localhost:5025/swagger
+Swagger: [https://localhost:5025/swagger](http://localhost:5025/swagger/index.html)
 
 
 4️⃣ Frontend (React) Çalıştırma
