@@ -5,7 +5,7 @@ import Login from "./pages/Login";
 import './App.css'
 
 import AdminDashboard from "./pages/Dashboard/AdminDashboard";
-import AppLayout from "./components/AppLayout";
+import TeacherDashboard from "./pages/Dashboard/TeacherDashboard";
 
 function App() {
 
@@ -19,6 +19,14 @@ function App() {
             element={
               <Protected roles={["Admin"]}>
                   <AdminDashboard />
+              </Protected>
+            }
+          />
+          <Route
+            path="/teacher"
+            element={
+              <Protected roles={["Teacher"]}>
+                  <TeacherDashboard />
               </Protected>
             }
           />

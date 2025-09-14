@@ -10,27 +10,38 @@ export default function Login() {
   const { refresh } = useAuth();
   const nav = useNavigate();
 
-  const onFinish = async (values) => {
-    setLoading(true);
-    try {
-      // 1) Giriş
-      if (tab === "admin")   await AuthApi.loginAdmin(values.userName, values.password);
-      if (tab === "teacher") await AuthApi.loginTeacher(values.firstName, values.lastName, values.password);
-      if (tab === "student") await AuthApi.loginStudent(values.number, values.password);
+const onFinish = async (values) => {
+  setLoading(true);
+  try {
+    // 1) Login
+    if (tab === "admin")   await AuthApi.loginAdmin(values.userName, values.password);
+    if (tab === "teacher") await AuthApi.loginTeacher(values.firstName, values.lastName, values.password);
+    if (tab === "student") await AuthApi.loginStudent(values.number, values.password);
 
-      // 2) Cookie geldi mi doğrula
-      const meRes = await AuthApi.me(); // 200 dönmeli
-      // 3) Context tazele + yönlendir
-      await refresh?.();
-      message.success(`Welcome ${meRes?.data?.profile?.firstName ?? meRes?.data?.userName ?? ""}`);
-      nav("/admin", { replace: true });
-    } catch (err) {
-      console.error("Login flow error:", err);
-      message.error("Giriş başarısız. Bilgileri ve sunucu bağlantısını kontrol edin.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    // 2) Oturumu doğrula
+    const { data } = await AuthApi.me(); // { roles: [...], profile: {...} }
+
+    // 3) Context tazele
+    await refresh?.();
+
+    message.success(`Welcome ${data?.profile?.firstName ?? data?.userName ?? ""}`);
+
+    // 4) Role'a göre rota seç
+    const roles = data?.roles ?? [];
+    const target =
+      roles.includes("Admin")   ? "/admin"   :
+      roles.includes("Teacher") ? "/teacher" :
+      "/login"; // öğrenci sayfası yoksa geçici
+
+    nav(target, { replace: true });
+  } catch (err) {
+    console.error("Login flow error:", err);
+    message.error("Giriş başarısız. Bilgileri ve sunucu bağlantısını kontrol edin.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div
