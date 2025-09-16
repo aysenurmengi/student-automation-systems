@@ -123,4 +123,36 @@ public class CoursesController : ControllerBase
         await _db.SaveChangesAsync();
         return Ok(new { message = "Comment added" });
     }
+
+    [Authorize(Roles = "Teacher,Student")]
+    [HttpGet("{courseId}/comments")]
+    public async Task<IActionResult> GetComments(string courseId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var c = await _db.Courses.FindAsync(courseId);
+        if (c is null || c.TeacherId != userId) return Forbid();
+        // öğretmen kendisne ait yorumları görsün
+        if (User.IsInRole("Teacher"))
+        {
+            if (c.TeacherId != userId) return Forbid();
+            var comments = await _db.CourseComments
+                .Where(cc => cc.CourseId == courseId)
+                .ToListAsync();
+
+            return Ok(comments);
+        }
+
+        if (User.IsInRole("Student"))
+        {
+            var st = await _db.Students.FirstOrDefaultAsync(s => s.UserId == userId);
+            if (st is null) return Forbid();
+            var comments = await _db.CourseComments
+                .Where(cc => cc.CourseId == courseId && cc.StudentId == st.UserId)
+                .ToListAsync();
+
+            return Ok(comments);
+        }
+        return Forbid();
+
+    }
 }
