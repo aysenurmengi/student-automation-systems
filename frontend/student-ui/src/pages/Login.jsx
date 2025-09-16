@@ -19,7 +19,7 @@ const onFinish = async (values) => {
     if (tab === "student") await AuthApi.loginStudent(values.number, values.password);
 
     // 2) Oturumu doğrula
-    const { data } = await AuthApi.me(); // { roles: [...], profile: {...} }
+    const { data } = await AuthApi.me();
 
     // 3) Context tazele
     await refresh?.();

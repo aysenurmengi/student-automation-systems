@@ -13,25 +13,23 @@ export const AuthContext = ({ children }) => {
   const [me, setMe] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Uygulama açılışında oturumu getir
+  
   useEffect(() => {
     (async () => {
       await refresh();
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Oturum bilgisini sunucudan yenile
   const refresh = async () => {
     try {
-      const { data } = await AuthApi.me(); // 200 ise cookie var
+      const { data } = await AuthApi.me();
       setMe(data);
       setLoading(false);
-      return true; // ✅ başarılı
+      return true;
     } catch {
       setMe(null);
       setLoading(false);
-      return false; // ❌ yetkisiz / hata
+      return false;
     }
   };
 

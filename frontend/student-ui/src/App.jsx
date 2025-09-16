@@ -6,6 +6,7 @@ import './App.css'
 
 import AdminDashboard from "./pages/Dashboard/AdminDashboard";
 import TeacherDashboard from "./pages/Dashboard/TeacherDashboard";
+import TeacherStudents from "./pages/Dashboard/TeacherStudents";
 
 function App() {
 
@@ -27,6 +28,14 @@ function App() {
             element={
               <Protected roles={["Teacher"]}>
                   <TeacherDashboard />
+              </Protected>
+            }
+          />
+          <Route
+            path="/teacher/students"
+            element={
+              <Protected roles={["Teacher"]}>
+                <TeacherStudents />
               </Protected>
             }
           />
