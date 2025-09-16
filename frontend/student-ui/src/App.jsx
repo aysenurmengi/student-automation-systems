@@ -5,7 +5,9 @@ import Login from "./pages/Login";
 import './App.css'
 
 import AdminDashboard from "./pages/Dashboard/AdminDashboard";
-import AppLayout from "./components/AppLayout";
+import TeacherDashboard from "./pages/Dashboard/TeacherDashboard";
+import TeacherStudents from "./pages/Dashboard/TeacherStudents";
+import TeacherCourses from "./pages/Dashboard/TeacherCourses";
 
 function App() {
 
@@ -19,6 +21,30 @@ function App() {
             element={
               <Protected roles={["Admin"]}>
                   <AdminDashboard />
+              </Protected>
+            }
+          />
+          <Route
+            path="/teacher"
+            element={
+              <Protected roles={["Teacher"]}>
+                  <TeacherDashboard />
+              </Protected>
+            }
+          />
+          <Route
+            path="/teacher/students"
+            element={
+              <Protected roles={["Teacher"]}>
+                <TeacherStudents />
+              </Protected>
+            }
+          />
+          <Route
+            path="/teacher/courses"
+            element={
+              <Protected roles={["Teacher"]}>
+                <TeacherCourses />
               </Protected>
             }
           />
