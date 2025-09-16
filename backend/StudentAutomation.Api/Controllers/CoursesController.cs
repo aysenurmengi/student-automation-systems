@@ -12,21 +12,32 @@ public class CoursesController : ControllerBase
     private readonly ApplicationDbContext _db;
     public CoursesController(ApplicationDbContext db) { _db = db; }
 
-    public record CreateCourseDto(string Code, string Name, string TeacherId);
+    public record CreateCourseDto(string Code, string Name, string? TeacherId);
     public record UpdateStatusDto(CourseStatus Status); // enum kullan
 
-    // Admin ders oluşturur
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Teacher")]
     [HttpPost]
     public async Task<IActionResult> Create(CreateCourseDto dto)
     {
-        // CourseId string olduğundan, EF otomatik üretmiyorsa bir GUID verelim
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+        var teacherId = dto.TeacherId;
+        if (User.IsInRole("Teacher"))
+        {
+            teacherId = userId;
+        }
+        else if (User.IsInRole("Admin"))
+        {
+            if (string.IsNullOrWhiteSpace(teacherId))
+                return BadRequest("TeacherId is required for Admin.");
+        }
+
         var c = new Course
         {
             CourseId = Guid.NewGuid().ToString("N"),
             Code = dto.Code,
             Name = dto.Name,
-            TeacherId = dto.TeacherId
+            TeacherId = teacherId!
         };
 
         _db.Courses.Add(c);
@@ -39,17 +50,17 @@ public class CoursesController : ControllerBase
     public async Task<IActionResult> GetAll() =>
         Ok(await _db.Courses.AsNoTracking().ToListAsync());
 
-    // Teacher kendi dersleri
-    [Authorize(Roles = "Teacher")]
-    [HttpGet("mine")]
-    public async Task<IActionResult> MyCourses()
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var list = await _db.Courses.AsNoTracking()
-                         .Where(c => c.TeacherId == userId)
-                         .ToListAsync();
-        return Ok(list);
-    }
+    // // Teacher kendi dersleri
+    // [Authorize(Roles = "Teacher")]
+    // [HttpGet("mine")]
+    // public async Task<IActionResult> MyCourses()
+    // {
+    //     var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+    //     var list = await _db.Courses.AsNoTracking()
+    //                      .Where(c => c.TeacherId == userId)
+    //                      .ToListAsync();
+    //     return Ok(list);
+    // }
 
     // Teacher status günceller (kendi dersinde)
     [Authorize(Roles = "Teacher")]
@@ -58,7 +69,7 @@ public class CoursesController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var c = await _db.Courses.FindAsync(courseId);
-        if (c is null || c.TeacherId != userId) return Forbid();
+        if (c is null ) return NotFound();
 
         c.Status = dto.Status; // enum
         await _db.SaveChangesAsync();
@@ -74,7 +85,7 @@ public class CoursesController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var c = await _db.Courses.FindAsync(courseId);
-        if (c is null || c.TeacherId != userId) return Forbid();
+        if (c is null) return NotFound();
 
         var exists = await _db.Enrollments
             .AnyAsync(e => e.CourseId == courseId && e.StudentId == dto.StudentId);
@@ -91,7 +102,7 @@ public class CoursesController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var c = await _db.Courses.FindAsync(courseId);
-        if (c is null || c.TeacherId != userId) return Forbid();
+        if (c is null ) return NotFound();
 
         var enr = await _db.Enrollments
             .FirstOrDefaultAsync(e => e.CourseId == courseId && e.StudentId == studentId);
@@ -100,6 +111,29 @@ public class CoursesController : ControllerBase
         _db.Enrollments.Remove(enr);
         await _db.SaveChangesAsync();
         return Ok(new { message = "Unenrolled" });
+    }
+
+    [Authorize(Roles = "Teacher")]
+    [HttpGet("{courseId}/students")]
+    public async Task<IActionResult> CourseStudents(string courseId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+        var c = await _db.Courses
+            .Include(x => x.Enrollments)
+            .ThenInclude(e => e.Student)
+            .FirstOrDefaultAsync(c => c.CourseId == courseId);
+
+        if (c is null) return NotFound();
+
+        var students = c.Enrollments.Select(e => new {
+            e.StudentId,
+            e.Student.Number,
+            e.Student.FirstName,
+            e.Student.LastName
+        });
+
+        return Ok(students);
     }
 
     // Yorum (Teacher → own course)
@@ -130,7 +164,7 @@ public class CoursesController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var c = await _db.Courses.FindAsync(courseId);
-        if (c is null || c.TeacherId != userId) return Forbid();
+        if (c is null) return NotFound();
         // öğretmen kendisne ait yorumları görsün
         if (User.IsInRole("Teacher"))
         {
