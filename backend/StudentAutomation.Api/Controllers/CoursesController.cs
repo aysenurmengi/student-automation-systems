@@ -15,6 +15,16 @@ public class CoursesController : ControllerBase
     public record CreateCourseDto(string Code, string Name, string? TeacherId);
     public record UpdateStatusDto(CourseStatus Status); // enum kullan
 
+    private async Task<Student?> GetCurrentStudentAsync()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId)) return null;
+
+        return await _db.Students
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.UserId == userId);
+    }
+
     [Authorize(Roles = "Admin,Teacher")]
     [HttpPost]
     public async Task<IActionResult> Create(CreateCourseDto dto)
@@ -50,17 +60,7 @@ public class CoursesController : ControllerBase
     public async Task<IActionResult> GetAll() =>
         Ok(await _db.Courses.AsNoTracking().ToListAsync());
 
-    // // Teacher kendi dersleri
-    // [Authorize(Roles = "Teacher")]
-    // [HttpGet("mine")]
-    // public async Task<IActionResult> MyCourses()
-    // {
-    //     var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-    //     var list = await _db.Courses.AsNoTracking()
-    //                      .Where(c => c.TeacherId == userId)
-    //                      .ToListAsync();
-    //     return Ok(list);
-    // }
+   
 
     // Teacher status günceller (kendi dersinde)
     [Authorize(Roles = "Teacher")]
@@ -188,5 +188,51 @@ public class CoursesController : ControllerBase
         }
         return Forbid();
 
+    }
+
+    [Authorize(Roles = "Student")]
+    [HttpGet("{courseId}/comments/mine")]
+    public async Task<IActionResult> MyComments()
+    {
+        var st = await GetCurrentStudentAsync();
+        if (st is null) return Forbid();
+
+        var comments = await _db.CourseComments
+            .Where(cc => cc.StudentId == st.UserId)
+            .Include(cc => cc.Course)
+            .Select(cc => new
+            {
+                cc.Course.Code,
+                cc.Course.Name,
+                cc.Comment,
+                cc.CreatedAt
+            })
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync();
+
+        return Ok(comments);
+    }
+
+
+    [Authorize(Roles = "Student")]
+    [HttpGet("mine")]
+    public async Task<IActionResult> MyCourses()
+    {
+        var st = await GetCurrentStudentAsync();
+        if (st is null) return Forbid();
+
+        var courses = await _db.Enrollments
+            .Where(e => e.StudentId == st.UserId)
+            .Include(e => e.Course)
+            .Select(e => new
+            {
+                e.Course.CourseId,
+                e.Course.Code,
+                e.Course.Name,
+                e.Course.Status
+            })
+            .ToListAsync();
+
+        return Ok(courses);
     }
 }
