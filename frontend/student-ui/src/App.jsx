@@ -8,6 +8,7 @@ import AdminDashboard from "./pages/Dashboard/AdminDashboard";
 import TeacherDashboard from "./pages/Dashboard/TeacherDashboard";
 import TeacherStudents from "./pages/Dashboard/TeacherStudents";
 import TeacherCourses from "./pages/Dashboard/TeacherCourses";
+import StudentDashboard from "./pages/Dashboard/StudentDashboard";
 
 function App() {
 
@@ -45,6 +46,14 @@ function App() {
             element={
               <Protected roles={["Teacher"]}>
                 <TeacherCourses />
+              </Protected>
+            }
+          />
+          <Route
+            path="/student"
+            element={
+              <Protected roles={["Student"]}>
+                  <StudentDashboard />
               </Protected>
             }
           />

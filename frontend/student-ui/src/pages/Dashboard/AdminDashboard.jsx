@@ -32,7 +32,7 @@ export default function AdminDashboard() {
 
   useEffect(() => { loadAll(); }, []);
 
-  // --- create handlers ---
+  //create
   const createStudent = async (v) => {
     setLoading(true);
     try {
@@ -82,7 +82,7 @@ export default function AdminDashboard() {
     } finally { setLoading(false); }
   };
 
-  // teacher select options for course form
+
   const teacherOptions = useMemo(
     () => teachers.map(t => ({ value: t.userId, label: `${t.firstName} ${t.lastName}` })),
     [teachers]

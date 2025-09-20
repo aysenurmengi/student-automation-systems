@@ -31,7 +31,8 @@ const onFinish = async (values) => {
     const target =
       roles.includes("Admin")   ? "/admin"   :
       roles.includes("Teacher") ? "/teacher" :
-      "/login"; // öğrenci sayfası yoksa geçici
+      roles.includes("Student") ? "/student" : 
+      "/login"; 
 
     nav(target, { replace: true });
   } catch (err) {
@@ -47,7 +48,7 @@ const onFinish = async (values) => {
     <div
       style={{
         overflow: "hidden",
-        height: "100dvh", // Height -> height
+        height: "100dvh",
         display: "grid",
         placeItems: "center",
         padding: 16,
