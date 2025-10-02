@@ -37,8 +37,10 @@ public class GradesController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var grades = await _db.Grades
             .Include(g => g.Enrollment)
+                .ThenInclude(e => e.Course)
             .Where(g => g.Enrollment.StudentId == userId)
-            .Select(g => new { g.Enrollment.CourseId, g.Score, g.CreatedAt })
+            .Select(g => new { g.Enrollment.CourseId, Code = g.Enrollment.Course.Code, Name = g.Enrollment.Course.Name, g.Score, g.CreatedAt })
+            .OrderByDescending(x=>x.CreatedAt)
             .ToListAsync();
         return Ok(grades);
     }
