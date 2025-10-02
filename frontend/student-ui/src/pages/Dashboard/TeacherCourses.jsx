@@ -2,6 +2,7 @@ import {useState, useEffect, useMemo} from "react";
 import { Row, Col, Card, Table, Form, Input, Button, Space, Select, message } from "antd";
 import { UsersApi } from "../../api/users";
 import { CoursesApi } from "../../api/courses";
+import {GradesApi} from "../../api/grades";
 
 export default function TeacherCourses() {
     const [loading, setLoading] = useState(false);
@@ -43,6 +44,33 @@ export default function TeacherCourses() {
     };
     loadCourseStudents();
     }, [selectedCourseId]);
+
+    const enrolledStudentOptions = useMemo(
+        () => (courseStudents || []).map(s => ({
+        value: s.studentId ?? s.StudentId,
+        label: `${(s.firstName ?? s.FirstName) || ""} ${(s.lastName ?? s.LastName) || ""} (${(s.number ?? s.Number) || "-"})`,
+    })),
+    [courseStudents]
+    );
+
+
+    const addGrade = async (v) => {
+        if(!selectedCourseId) {message.warning("Önce bir ders seçini yapınız."); return;}
+        setLoading(true);
+        try {
+            await GradesApi.add({
+                courseId: selectedCourseId,
+                studentId: v.studentId,
+                score: Number(v.score),
+            });
+            message.success("Grade added");
+        } catch (err) {
+            const msg = err?.response?.data;
+            message.error(Array.isArray(msg) ? msg.join(", ") : (msg || "Add grade failed"));
+        } finally{
+            setLoading(false);
+        };
+    }
 
     const createCourse = async (v) => {
         setLoading(true);
@@ -174,6 +202,15 @@ export default function TeacherCourses() {
                         disabled={!selectedCourseId}
                     />
                  </Card>
+
+                 <Card title="Add Grade" size="small" style={{marginTop: 16}}>
+                    <AddGradeForm
+                        onSubmit={addGrade}
+                        loading={loading}
+                        students={enrolledStudentOptions}
+                        disabled={!selectedCourseId || enrolledStudentOptions.length === 0}
+                    />
+                 </Card>
             </Col>
 
         </Row>
@@ -218,4 +255,31 @@ function AddEnrollmentForm({ onSubmit, loading, students, disabled }) {
       </Space>
     </Form>
   );
+
+}
+
+function AddGradeForm({onSubmit, loading, students, disabled}) {
+    const [form] = Form.useForm();
+    const submit = (v) => onSubmit(v).then(() => form.resetFields());
+
+    return (
+        <Form layout="vertical" form={form} onFinish={submit}>
+            <Form.Item name="studentId" label="Student" rules={[{required:true}]}>
+                <Select
+                    options={students}
+                    placeholder={disabled ? "Select a course first" : "Select student"}
+                    disabled={disabled}
+                    showSearch
+                    optionFilterProp="label"
+                />
+            </Form.Item>
+            <Form.Item name="score" label="Score" rules={[{required: true}]}>
+                <Input type="number" min={0} max={100} step="0.1"/>
+            </Form.Item>
+            <Space style={{display: "flex", justifyContent:"flex-end"}}>
+                <Button onClick={() => form.resetFields()} disabled= {disabled}> Clear </Button>
+                <Button type="primary" htmlType="submit" loading={loading} disabled={disabled}>Add Grade</Button>
+            </Space>
+        </Form>
+    );
 }
