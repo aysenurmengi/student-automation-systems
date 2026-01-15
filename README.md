@@ -1,7 +1,7 @@
 # 🎓 Student Automation System
 
 ## 📌 Proje Açıklaması
-**Student Automation System**, öğrenci, öğretmen ve ders yönetimini kolaylaştırmak için geliştirilmiş bir tam-stack web uygulamasıdır.  
+**Student Automation System**, öğrenci, öğretmen ve ders yönetimini kolaylaştırmak için geliştirilmiş bir full-stack web uygulamasıdır.  
 
 - **Backend**: ASP.NET Core 9 + Entity Framework Core + PostgreSQL  
 - **Frontend**: React + Ant Design  
