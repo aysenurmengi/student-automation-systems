@@ -106,6 +106,15 @@ student-automation/
 
 Uygulama: http://localhost:5173
 
-### 🎁 Bonus Görevler
-+ Swagger Entegrasyonu
-+ Responsive frontend tasarımı (Ant Design ile)
+Login Page
+<img width="778" height="660" alt="Ekran görüntüsü 2026-04-28 174642" src="https://github.com/user-attachments/assets/1dbab443-585d-45ce-8b54-1771babda717" />
+
+Student Page
+<img width="1901" height="899" alt="Ekran görüntüsü 2026-04-28 174905" src="https://github.com/user-attachments/assets/3ecd057c-b984-4a7e-8356-0163439b520c" />
+
+Teacher Pages
+<img width="1131" height="599" alt="Ekran görüntüsü 2026-04-28 174810" src="https://github.com/user-attachments/assets/6d0b3fce-9ba7-44b5-8736-41de25c2fbd5" />
+<img width="1893" height="884" alt="Ekran görüntüsü 2026-04-28 174821" src="https://github.com/user-attachments/assets/2d36d1f0-402c-43cb-9e0d-a7914c2207f6" />
+<img width="1900" height="887" alt="Ekran görüntüsü 2026-04-28 174832" src="https://github.com/user-attachments/assets/1e1db4a4-7de8-449c-a44c-f90167015fd0" />
+
+
